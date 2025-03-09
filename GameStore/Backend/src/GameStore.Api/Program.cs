@@ -55,6 +55,10 @@ app.MapGet("/games/{id}", (Guid id) =>
 //POST /games
 app.MapPost("/games", (Game game) =>
 {
+    if (string.IsNullOrEmpty(game.Name))
+    {
+        return Results.BadRequest("Game name is required");
+    }
     game.Id = Guid.NewGuid();
     games.Add(game);
 
@@ -62,8 +66,37 @@ app.MapPost("/games", (Game game) =>
         GetGameEndPointName,
         new { id = game.Id },
         game);
+}).WithParameterValidation();
+
+//PUT /games/{id}
+app.MapPut("/games/{id}", (Guid id, Game updatedGame) =>
+{
+    var existingGame = games.Find(game => game.Id == id);
+    if (existingGame is null)
+    {
+        return Results.NotFound("Game was not found");
+    }
+
+    existingGame.Name = updatedGame.Name;
+    existingGame.Genre = updatedGame.Genre;
+    existingGame.Price = updatedGame.Price;
+    existingGame.ReleaseDate = updatedGame.ReleaseDate;
+
+    return Results.NoContent();
+
 });
 
+//DELETE /games/{id}
+app.MapDelete("/games/{id}", (Guid id) =>
+{
+    var existingGame = games.Find(game => game.Id == id);
+    if (existingGame is null)
+    {
+        return Results.NotFound("Game was not found");
+    }
 
+    games.Remove(existingGame);
+    return Results.NoContent();
+});
 
 app.Run();
